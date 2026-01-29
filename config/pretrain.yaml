@@ -1,0 +1,56 @@
+# SimCLR Pretraining Configuration
+# Variants: A (resnet_mlp+mlp), B (resnet_mlp+chebykan), C (resnet_kan+mlp), D (resnet_kan+chebykan)
+
+run_name: "simclr_A"
+variant: "A"  # A, B, C, D
+
+# Data
+data:
+  dataset: "chestmnist"
+  image_size: 28
+  grayscale_mode: "repeat"  # "repeat" (1->3 channels) or "adapt" (modify stem to 1ch)
+  num_workers: 4
+
+# Model
+model:
+  backbone: "resnet_mlp"      # "resnet_mlp" or "resnet_kan"
+  head: "mlp"                 # "mlp" or "chebykan"
+  resnet_depth: 18            # 18, 34, 50
+  embedding_dim: 512          # encoder output dim
+  projection_dim: 128         # projector output dim
+  projection_hidden_dim: 512  # projector hidden dim
+  # ChebyKAN specific
+  chebykan_degree: 4
+
+# Training
+training:
+  epochs: 100
+  batch_size: 256
+  lr: 0.001
+  weight_decay: 1e-4
+  optimizer: "adam"           # "adam" or "sgd"
+  # Scheduler
+  scheduler: "cosine"         # "cosine" or "none"
+  warmup_epochs: 10
+
+# SimCLR
+simclr:
+  temperature: 0.5
+
+# Augmentations
+augmentations:
+  random_crop: true
+  crop_scale: [0.2, 1.0]
+  horizontal_flip: true
+  color_jitter: true
+  jitter_strength: 0.5
+  gaussian_blur: false        # typically off for small images
+  blur_kernel_size: 3
+
+# Paths
+output_dir: "results"
+resume: null  # path to checkpoint to resume from
+
+# Reproducibility
+seed: 42
+deterministic: false  # set true for full reproducibility (slower)

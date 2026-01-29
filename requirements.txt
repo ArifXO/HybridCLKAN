@@ -1,0 +1,26 @@
+# Core ML/DL
+torch>=2.0.0
+torchvision>=0.15.0
+torchaudio>=2.0.0
+
+# Medical imaging dataset
+medmnist>=2.2.0
+
+# Scientific computing
+numpy>=1.24.0
+scipy>=1.10.0
+
+# Machine learning utilities
+scikit-learn>=1.2.0
+
+# Visualization
+matplotlib>=3.7.0
+umap-learn>=0.5.3
+
+# Configuration & utilities
+pyyaml>=6.0
+tqdm>=4.65.0
+
+# Optional: Jupyter notebooks
+# jupyter>=1.0.0
+# ipykernel>=6.22.0
