@@ -1,0 +1,29 @@
+# Plot Summary
+
+## Per-Depth Comparison Plots
+
+### Depth 18 (`depth_d18/`)
+- `loss_curve_variants.png`: Training loss over epochs for all variants
+- `linear_probe_auroc_variants.png`: Linear evaluation AUROC over epochs
+- `alignment_variants.png`: Representation alignment (lower = better)
+- `uniformity_variants.png`: Representation uniformity (lower = better)
+- `ap_curve_variants.png`: Average precision over epochs
+- `lr_curve_variants.png`: Learning rate schedule
+- `parameters.md`: Parameter count comparison table
+
+### Depth 34 (`depth_d34/`)
+- `loss_curve_variants.png`: Training loss over epochs for all variants
+- `linear_probe_auroc_variants.png`: Linear evaluation AUROC over epochs
+- `alignment_variants.png`: Representation alignment (lower = better)
+- `uniformity_variants.png`: Representation uniformity (lower = better)
+- `ap_curve_variants.png`: Average precision over epochs
+- `lr_curve_variants.png`: Learning rate schedule
+- `parameters.md`: Parameter count comparison table
+
+## Scaling Analysis Plots
+- `scaling_auc_vs_params.png`: AUROC vs model size (scatter with depth annotations)
+- `scaling_auc_vs_time.png`: AUROC vs training time
+- `auc_by_variant.png`: Bar chart of final AUROC
+- `efficiency_by_variant.png`: AUROC per million parameters
+- `param_counts_by_variant.png`: Model sizes comparison
+- `scaling_summary.md`: Full results table
