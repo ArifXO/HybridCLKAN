@@ -131,9 +131,9 @@ tmp/
 temp/
 
 # Plots (regenerated from metrics)
-# *.png
-# *.pdf
-# *.svg
+*.png
+*.pdf
+*.svg
 
 # Metrics JSONL (regenerated during training)
 metrics.jsonl

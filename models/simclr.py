@@ -89,7 +89,7 @@ def build_simclr(cfg):
         cfg: config dict with model settings
     
     Returns:
-        SimCLR model
+        tuple: (SimCLR model, projector_build_info dict)
     """
     from models.encoders import build_encoder
     from models.projectors import build_projector
@@ -118,13 +118,14 @@ def build_simclr(cfg):
         in_channels=1 if cfg["data"].get("grayscale_mode") == "adapt" else 3
     )
     
-    # Build projector
-    projector = build_projector(
+    # Build projector (now returns tuple with build_info)
+    projector, projector_build_info = build_projector(
         head_type=head,
         input_dim=model_cfg.get("embedding_dim", 512),
         hidden_dim=model_cfg.get("projection_hidden_dim", 512),
         output_dim=model_cfg.get("projection_dim", 128),
-        chebykan_degree=model_cfg.get("chebykan_degree", 4)
+        chebykan_degree=model_cfg.get("chebykan_degree", 4),
+        chebykan_match_mlp_params=model_cfg.get("chebykan_match_mlp_params", False)
     )
     
-    return SimCLR(encoder, projector)
+    return SimCLR(encoder, projector), projector_build_info

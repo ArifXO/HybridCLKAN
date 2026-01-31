@@ -21,6 +21,7 @@ model:
   projection_hidden_dim: 512  # projector hidden dim
   # ChebyKAN specific
   chebykan_degree: 4
+  chebykan_match_mlp_params: false  # match ChebyKAN param count to MLP (for fair comparison)
 
 # Training
 training:

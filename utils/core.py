@@ -73,6 +73,42 @@ def save_json_metrics_append(path, metrics_dict):
         f.write(json.dumps(metrics_dict) + "\n")
 
 
+def truncate_metrics_for_resume(path, resume_epoch):
+    """
+    Truncate metrics.jsonl to only contain entries for epochs < resume_epoch.
+    
+    This prevents duplicate/out-of-order entries when resuming from checkpoint.
+    
+    Args:
+        path: path to metrics.jsonl file
+        resume_epoch: the epoch we're resuming from (1-indexed display epoch)
+    
+    Returns:
+        int: number of entries kept
+    """
+    path = Path(path)
+    if not path.exists():
+        return 0
+    
+    # Read all entries and keep only those before resume_epoch
+    kept_entries = []
+    with open(path, "r") as f:
+        for line in f:
+            try:
+                entry = json.loads(line.strip())
+                # Keep entries with epoch < resume_epoch (epochs are 1-indexed in metrics)
+                if entry.get("epoch", 0) < resume_epoch:
+                    kept_entries.append(line)
+            except json.JSONDecodeError:
+                continue
+    
+    # Rewrite file with only kept entries
+    with open(path, "w") as f:
+        f.writelines(kept_entries)
+    
+    return len(kept_entries)
+
+
 def load_json_metrics(path):
     """
     Load metrics list from JSONL file (one JSON object per line).
@@ -109,9 +145,24 @@ def get_rng_states():
 def set_rng_states(rng_states):
     """Restore RNG states for reproducible resume."""
     random.setstate(rng_states["python"])
-    torch.set_rng_state(rng_states["torch"])
+    # Ensure torch RNG state is on CPU and is ByteTensor
+    torch_rng = rng_states["torch"]
+    if hasattr(torch_rng, 'cpu'):
+        torch_rng = torch_rng.cpu()
+    if torch_rng.dtype != torch.uint8:
+        torch_rng = torch_rng.to(torch.uint8)
+    torch.set_rng_state(torch_rng)
     if torch.cuda.is_available() and "cuda" in rng_states:
-        torch.cuda.set_rng_state_all(rng_states["cuda"])
+        cuda_states = rng_states["cuda"]
+        # Convert each CUDA RNG state to ByteTensor if needed
+        converted_states = []
+        for state in cuda_states:
+            if hasattr(state, 'cpu'):
+                state = state.cpu()
+            if state.dtype != torch.uint8:
+                state = state.to(torch.uint8)
+            converted_states.append(state)
+        torch.cuda.set_rng_state_all(converted_states)
 
 
 def save_checkpoint(path, model, optimizer, scheduler, scaler, epoch, best_metric=None):

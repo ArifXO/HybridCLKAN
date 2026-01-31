@@ -31,6 +31,7 @@ from utils.core import (
     make_run_dir,
     save_config,
     save_json_metrics_append,
+    truncate_metrics_for_resume,
     save_checkpoint,
     load_checkpoint,
     count_parameters,
@@ -307,6 +308,9 @@ def main():
     # Periodic evaluation
     parser.add_argument("--eval_every", type=int, default=0, help="Run eval every N epochs (0=disabled)")
     parser.add_argument("--output_dir", type=str, default=None, help="Override output directory")
+    # ChebyKAN param matching
+    parser.add_argument("--chebykan_match_mlp_params", action="store_true", 
+                        help="Match ChebyKAN projector params to MLP projector params")
     args = parser.parse_args()
     
     # Load config
@@ -324,6 +328,9 @@ def main():
         "model.projection_dim": args.projection_dim,
         "model.projection_hidden_dim": args.projection_hidden_dim,
     }
+    # Handle bool flag separately (argparse store_true)
+    if args.chebykan_match_mlp_params:
+        overrides["model.chebykan_match_mlp_params"] = True
     # Filter None values
     overrides = {k: v for k, v in overrides.items() if v is not None}
     
@@ -367,7 +374,7 @@ def main():
           f"embed_dim={model_cfg.get('embedding_dim', 512)}, "
           f"proj_hidden={model_cfg.get('projection_hidden_dim', 512)}, "
           f"proj_out={model_cfg.get('projection_dim', 128)}")
-    model = build_simclr(cfg)
+    model, projector_build_info = build_simclr(cfg)
     model = model.to(device)
     
     # Count parameters
@@ -404,6 +411,13 @@ def main():
     metrics_path = run_dir / "metrics.jsonl"
     eval_every = args.eval_every
     
+    # If resuming, truncate metrics.jsonl to avoid duplicate entries
+    if start_epoch > 0 and metrics_path.exists():
+        # start_epoch is 0-indexed, but metrics use 1-indexed epochs
+        # So we keep entries with epoch < start_epoch + 1
+        kept = truncate_metrics_for_resume(metrics_path, start_epoch + 1)
+        print(f"Truncated metrics.jsonl to {kept} entries (epochs 1-{start_epoch})")
+    
     print(f"\nStarting training from epoch {start_epoch} to {epochs}")
     if eval_every > 0:
         print(f"Periodic evaluation every {eval_every} epochs")
@@ -423,9 +437,10 @@ def main():
             "epoch_time_sec": epoch_timer.elapsed,
         }
         
-        # Save param_counts on first epoch only
+        # Save param_counts and projector_build_info on first epoch only
         if epoch == start_epoch:
             epoch_metrics["param_counts"] = param_counts
+            epoch_metrics["projector_build_info"] = projector_build_info
         
         # Periodic evaluation (includes alignment/uniformity)
         if eval_every > 0 and ((epoch + 1) % eval_every == 0 or epoch == epochs - 1):

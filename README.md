@@ -19,6 +19,16 @@ Investigate whether KAN-based architectures can improve representation learning 
 | **C** | ResNet-KAN | MLP | KAN backbone only |
 | **D** | ResNet-KAN | ChebyKAN | Full KAN: backbone + head |
 
+### Parameter Matching (Fair Comparison)
+
+By default, ChebyKAN projectors have ~7x more parameters than MLP projectors at the same hidden dimension. For fair comparison, use `--chebykan_match_mlp_params` to automatically adjust the ChebyKAN hidden dimension so its parameter count matches the MLP projector:
+
+```bash
+# MLP projector (512→512→128): ~329K params
+# ChebyKAN matched: hidden_dim=73, ~327K params (0.66% difference)
+python scripts/pretrain.py --variant B --chebykan_match_mlp_params
+```
+
 ## 🏗️ Repository Structure
 
 ```
@@ -102,6 +112,26 @@ python scripts/sweep_scaling.py \
     --seed 42
 ```
 
+### Multi-Seed Experiments
+
+For statistical significance, run multiple seeds per configuration:
+
+```bash
+python scripts/sweep_scaling.py \
+    --variants A B C D \
+    --depths 18 34 \
+    --seeds 41 42 43 \
+    --epochs 50 \
+    --eval_every 10 \
+    --chebykan_match_mlp_params
+```
+
+Multi-seed mode:
+- Creates `seed_*/` subdirectories: `{variant}/d{depth}/seed_{seed}/`
+- Aggregates metrics as **mean ± std** across seeds
+- Plots show **shaded error bands** (±1 std)
+- Summary tables report `value±std` format
+
 This creates a structured output:
 ```
 results/_sweep_<timestamp>/
@@ -123,10 +153,15 @@ results/_sweep_<timestamp>/
 │   ├── param_counts_by_variant.png
 │   ├── scaling_summary.md
 │   └── plot_summary.md
-├── A/d18/, A/d34/, A/d50/       # Variant A results
-├── B/d18/, B/d34/, B/d50/       # Variant B results
-├── C/d18/, C/d34/, C/d50/       # Variant C results
-└── D/d18/, D/d34/, D/d50/       # Variant D results
+│
+│   # Single-seed layout:
+├── A/d18/, A/d34/, A/d50/
+├── B/d18/, ...
+│
+│   # Multi-seed layout:
+├── A/d18/seed_41/, A/d18/seed_42/, A/d18/seed_43/
+├── A/d34/seed_41/, ...
+└── ...
 ```
 
 **Training order**: For each depth, all variants run in order A→B→C→D before moving to next depth:
@@ -166,6 +201,7 @@ model:
   projection_dim: 128        # Projector output dimension
   projection_hidden_dim: 512 # Projector hidden dimension
   chebykan_degree: 4         # Chebyshev polynomial degree (for KAN)
+  chebykan_match_mlp_params: false  # Match ChebyKAN params to MLP (fair comparison)
 
 # Training
 training:
@@ -213,16 +249,22 @@ Each epoch saves a JSON line with:
 - `train_loss`: NT-Xent contrastive loss
 - `lr`: Current learning rate
 - `epoch_time_sec`: Epoch training time in seconds
-- `alignment`: Mean pairwise distance of positive pairs (lower = better)
-- `uniformity`: Distribution uniformity on hypersphere (more negative = better)
 - `param_counts`: Parameter counts (saved on first epoch only)
   - `encoder`: Encoder/backbone parameters
   - `projector`: Projector/head parameters  
   - `total`: Total model parameters
+- `projector_build_info`: Projector configuration (saved on first epoch only)
+  - `head_type`: "mlp" or "chebykan"
+  - `projector_hidden_dim_used`: Actual hidden dimension used
+  - `projector_params_actual`: Actual projector parameter count
+  - `chebykan_match_mlp_params`: Whether param matching was enabled
+  - `projector_params_target`: Target params (only when matching enabled)
 
 On evaluation epochs (controlled by `--eval_every`):
 - `linear_probe_auroc`: Linear probe evaluation AUROC (multi-label)
 - `linear_probe_ap`: Linear probe average precision
+- `alignment`: Mean pairwise distance of positive pairs (lower = better)
+- `uniformity`: Distribution uniformity on hypersphere (more negative = better)
 
 ### Checkpoints
 
