@@ -106,8 +106,8 @@ Desktop.ini
 # ===================
 
 # Results and checkpoints (large files)
-results/
-!results/.gitkeep
+# results/
+# !results/.gitkeep
 
 # Model checkpoints
 *.pt
@@ -130,16 +130,16 @@ logs/
 tmp/
 temp/
 
-# Plots (regenerated from metrics)
-*.png
-*.pdf
-*.svg
+# # Plots (regenerated from metrics)
+# *.png
+# *.pdf
+# *.svg
 
-# Metrics JSONL (regenerated during training)
-metrics.jsonl
+# # Metrics JSONL (regenerated during training)
+# metrics.jsonl
 
-# Config resolved (generated at runtime)
-config_resolved.yaml
+# # Config resolved (generated at runtime)
+# config_resolved.yaml
 
-# Sweep directories (contain large checkpoints)
-_sweep_*/
+# # Sweep directories (contain large checkpoints)
+# _sweep_*/

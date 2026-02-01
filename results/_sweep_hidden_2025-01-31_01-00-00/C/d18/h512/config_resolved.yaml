@@ -1,0 +1,40 @@
+run_name: seed_42
+variant: C
+data:
+  dataset: chestmnist
+  image_size: 28
+  grayscale_mode: repeat
+  num_workers: 4
+model:
+  backbone: resnet_kan
+  head: mlp
+  resnet_depth: 18
+  embedding_dim: 512
+  projection_dim: 128
+  projection_hidden_dim: 512
+  chebykan_degree: 4
+  chebykan_match_mlp_params: true
+training:
+  epochs: 100
+  batch_size: 256
+  lr: 0.001
+  weight_decay: 1e-4
+  optimizer: adam
+  scheduler: cosine
+  warmup_epochs: 10
+simclr:
+  temperature: 0.5
+augmentations:
+  random_crop: true
+  crop_scale:
+  - 0.2
+  - 1.0
+  horizontal_flip: true
+  color_jitter: true
+  jitter_strength: 0.5
+  gaussian_blur: false
+  blur_kernel_size: 3
+output_dir: A:\UNI\Thesis\CODE\VV\results\_sweep_2026-01-30_20-49-38\C\d18
+resume: null
+seed: 42
+deterministic: false
